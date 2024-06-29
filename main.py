@@ -10,7 +10,7 @@ wood_html = html_dict.get('wood')
 stone_html = html_dict.get('stone')
 
 resources_data = [metal_html, leather_html, cloth_html, wood_html, stone_html]
-start_row = 80
+start_row = 2
 for resource in resources_data:
     material_data = material_pars(resource)
     add_value(material_data, start_row)
