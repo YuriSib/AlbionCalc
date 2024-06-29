@@ -41,35 +41,44 @@ def get_html(xpath_dict: dict):
 
 def material_pars(material_html) -> list:
     metal_list = material_html.find_all('div', {'class': 'item-row'})
-    material_data = []
     col_num = 1
     row_num = 1
+    full_data = []
     for div in metal_list:
         data = div.find_all('div', {'data-v-46ecdbca': True})
-        data_list = [block for block in data if len(block.get_text(strip=True)) < 10]
+        data_list = [block for block in data if len(block.get_text(strip=True)) < 15]
+        row_1, row_2, row_3, row_4 = [], [], [], []
+        distribution = {1: row_1, 2: row_2, 3: row_3, 4: row_4}
 
+        data_ = []
         for data in data_list:
-            if 'class="success"' in str(data):
-                time_ = {'value': data.get_text(strip=True), 'row': row_num, 'column': col_num + 1}
-                material_data.append(time_)
-                print(time_)
-                row_num += 1
+            if row_num == 5:
+                print(row_num)
+
+            if 'class="success"' in str(data) or 'class="error"' in str(data):
+                time_ = data.get_text(strip=True)
+                if time_ == '∞':
+                    distribution[3].append(time_)
+                else:
+                    distribution[row_num].append(time_)
+                    row_num += 1
             else:
-                cost = {'value': data.get_text(strip=True), 'row': row_num, 'column': col_num}
-                material_data.append(cost)
-                print(cost)
+                cost = data.get_text(strip=True)
+                distribution[row_num].append(cost)
 
             if data.get_text(strip=True) == '-':
-                print('**************************************')
-
                 col_num += 2
-                row_num -= 4
+                row_num = 1
+
+        data_.append(row_1)
+        data_.append(row_2)
+        data_.append(row_3)
+        data_.append(row_4)
+        full_data.append(data_)
 
         col_num -= 10
-        row_num += 4
-
-        print('__________________________________________________________________________\n'*4)
-    return material_data
+        row_num = 1
+    return full_data
 
 
 if __name__ == "__main__":

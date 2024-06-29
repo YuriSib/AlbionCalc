@@ -11,16 +11,16 @@ def row_col_to_a1(row, col):
     return f'{letter}{row}'
 
 
-def add_value(material_data: [()]):
+def add_value(material_data: list, start_row: int):
     gc = gspread.service_account(filename='creds.json')
-    # sheet = gc.open("таблица расчета").get_worksheet(1)
-    sheet = gc.open("Тест").sheet1
+    sheet = gc.open("таблица расчета").get_worksheet(1)
+    # sheet = gc.open("Тест").sheet1
 
-    for value in material_data:
-        row = value['row']
-        column = value['column']
-
-        sheet.update_cell(row=row, col=column, value=value['value'])
+    start_col = 2
+    for data in material_data:
+        start_cell = row_col_to_a1(start_row, start_col)
+        sheet.update(start_cell, data)
+        start_row += 4
 
 
     # if current_date in date_list:
