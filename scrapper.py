@@ -6,7 +6,7 @@ import json
 import time
 
 from fake_useragent import UserAgent
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 
 
 xpath_resources = {
@@ -17,26 +17,65 @@ xpath_resources = {
     "stone": '''//*[@id="__layout"]/div/div/section/div[3]/div[2]/div/div[5]'''
 }
 
+towns = {
+            "Bridgewatch": 'ArrowUp',
+            "Caerleon": 'c',
+            "Fort Sterling": 'f',
+            "Lymhurst": 'l',
+            "Martlock": 'm',
+            "Thetford": 't',
+            "Brecilien": 'b',
+        }
 
-def get_html(xpath_dict: dict):
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
-        context = browser.new_context()
-        page = context.new_page()
+xpath_other_towns = {
+        'sale': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[7]/select''',
+        'recycling': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[8]/select''',
+        'materials': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[9]/select''',
+        'resources': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[10]/select'''
+}
 
-        page.goto('https://albion-profit-calculator.com/ru/refining', wait_until='load')
 
-        html_dict = {}
-        for key, xpath in xpath_dict.items():
-            page.locator(xpath).click()
-            time.sleep(4)
-            html_content = page.content()
-            soup = BeautifulSoup(html_content, 'lxml')
-            material_html = soup.find('div', {'class': 'item-table'})
-            html_dict[key] = material_html
-        browser.close()
+async def get_html(xpath_resource, tax, other_towns_xpath=None):
+    async def click_other_towns(xpath_key, town):
+        await page.locator(xpath_other_towns[xpath_key]).click()
+        time.sleep(2)
+        await page.keyboard.down(sale)
+        await page.keyboard.down(town)
 
-    return html_dict
+    async with async_playwright() as p:
+        browser = await p.firefox.launch(headless=False)
+        page = await browser.new_page()
+
+        await page.goto('https://albion-profit-calculator.com/ru/refining', wait_until='load')
+
+        await page.locator(xpath_resource).click()
+        time.sleep(2)
+
+        if other_towns_xpath:
+            sale, recycling, materials, resources = other_towns_xpath[0], other_towns_xpath[1], other_towns_xpath[2], other_towns_xpath[3]
+
+            await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[2]/label''').click()
+            time.sleep(2)
+
+            await click_other_towns('sale', sale)
+            await click_other_towns('recycling', recycling)
+            await click_other_towns('materials', materials)
+            await click_other_towns('resources', resources)
+
+        await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[4]/input''').click()
+        time.sleep(1)
+        for i in range(3):
+            await page.keyboard.down('Backspace')
+        await page.keyboard.insert_text(tax)
+        time.sleep(4)
+
+        html_content = await page.content()
+        soup = BeautifulSoup(html_content, 'lxml')
+        material_html = soup.find('div', {'class': 'item-table'})
+
+        await browser.close()
+
+    return material_html
 
 
 def material_pars(material_html) -> list:
@@ -90,12 +129,13 @@ def material_pars(material_html) -> list:
 
 
 if __name__ == "__main__":
-    # html_dict = get_html(xpath_resources)
-    # metal_html = html_dict.get('metal')
-    # with open('output.html', 'w', encoding='utf-8') as file:
-    #     file.write(str(metal_html))
+    xpath_resource = xpath_resources.get('stone')
+    other_towns_xpath = [towns["Bridgewatch"], towns["Martlock"], towns["Martlock"], towns["Thetford"]]
+    material_html = asyncio.run(get_html(xpath_resource, '1000'))
+    with open('output.html', 'w', encoding='utf-8') as file:
+        file.write(str(material_html))
 
-    with open('output.html', 'r', encoding='utf-8') as file:
-        metal_html = BeautifulSoup(file.read(), 'lxml')
-
-    print(material_pars(metal_html))
+    # with open('output.html', 'r', encoding='utf-8') as file:
+    #     metal_html = BeautifulSoup(file.read(), 'lxml')
+    #
+    # print(material_pars(metal_html))
