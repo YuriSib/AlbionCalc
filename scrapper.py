@@ -51,14 +51,22 @@ def material_pars(material_html) -> list:
         distribution = {1: row_1, 2: row_2, 3: row_3, 4: row_4}
 
         data_ = []
+        error_flag = False
         for data in data_list:
+            if error_flag:
+                error_flag = False
+                row_num += 1
+                continue
+
             if row_num == 5:
                 print(row_num)
 
             if 'class="success"' in str(data) or 'class="error"' in str(data):
                 time_ = data.get_text(strip=True)
-                if time_ == '∞':
-                    distribution[3].append(time_)
+                if time_ == '0':
+                    distribution[row_num].append('0')
+                    distribution[row_num].append('∞')
+                    error_flag = True
                 else:
                     distribution[row_num].append(time_)
                     row_num += 1

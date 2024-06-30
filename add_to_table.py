@@ -24,9 +24,9 @@ def add_value(material_data: list, start_row: int):
         start_row += 4
 
 
-# gc = gspread.service_account(filename='creds.json')
-# sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
-#
-# # cell_value = sheet.cell(75, 2).value
-# # print(cell_value)
-# sheet.update_cell(row=1, col=2, value="test")
+gc = gspread.service_account(filename='creds.json')
+sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
+
+# cell_value = sheet.cell(75, 2).value
+# print(cell_value)
+sheet.update_cell(row=86, col=12, value="")
