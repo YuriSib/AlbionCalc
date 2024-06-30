@@ -14,7 +14,8 @@ def row_col_to_a1(row, col):
 def add_value(material_data: list, start_row: int):
     gc = gspread.service_account(filename='creds.json')
     # sheet = gc.open("таблица расчета").get_worksheet(1)
-    sheet = gc.open("Тест").sheet1
+    # sheet = gc.open("Тест").sheet1
+    sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
 
     start_col = 2
     for data in material_data:
@@ -24,8 +25,8 @@ def add_value(material_data: list, start_row: int):
 
 
 # gc = gspread.service_account(filename='creds.json')
-# sheet = gc.open("таблица расчета").get_worksheet(1)
+# sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
 #
-# cell_value = sheet.cell(75, 2).value
-# print(cell_value)
-# sheet.update_cell(row=100, col=2, value="test")
+# # cell_value = sheet.cell(75, 2).value
+# # print(cell_value)
+# sheet.update_cell(row=1, col=2, value="test")
