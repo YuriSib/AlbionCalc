@@ -17,14 +17,14 @@ xpath_resources = {
     "stone": '''//*[@id="__layout"]/div/div/section/div[3]/div[2]/div/div[5]'''
 }
 
-towns = {
-            "Bridgewatch": 'ArrowUp',
-            "Caerleon": 'c',
-            "Fort Sterling": 'f',
-            "Lymhurst": 'l',
-            "Martlock": 'm',
-            "Thetford": 't',
-            "Brecilien": 'b',
+town_click = {
+            "Bridgewatch": -1,
+            "Caerleon": 0,
+            "Fort Sterling": 1,
+            "Lymhurst": 2,
+            "Martlock": 3,
+            "Thetford": 4,
+            "Brecilien": 5,
         }
 
 xpath_other_towns = {
@@ -35,13 +35,20 @@ xpath_other_towns = {
 }
 
 
-async def get_html(xpath_resource, tax, other_towns_xpath=None):
-    async def click_other_towns(xpath_key, town):
-        await page.locator(xpath_other_towns[xpath_key]).click()
-        time.sleep(2)
-        await page.keyboard.down(sale)
-        await page.keyboard.down(town)
+async def click_other_towns(page, xpath_key, town_num):
+    await page.locator(xpath_other_towns[xpath_key]).click()
+    if town_num >= 0:
+        await asyncio.sleep(2)
+        for i in range(town_num):
+            await page.keyboard.down('ArrowDown')
+            await asyncio.sleep(1)
+    else:
+        await page.keyboard.down('ArrowUp')
+    await asyncio.sleep(1)
+    await page.keyboard.down("Enter")
 
+
+async def get_html(xpath_resource, tax, other_towns_xpath=None, a_town=None):
     async with async_playwright() as p:
         browser = await p.firefox.launch(headless=False)
         page = await browser.new_page()
@@ -49,25 +56,28 @@ async def get_html(xpath_resource, tax, other_towns_xpath=None):
         await page.goto('https://albion-profit-calculator.com/ru/refining', wait_until='load')
 
         await page.locator(xpath_resource).click()
-        time.sleep(2)
+        await asyncio.sleep(2)
 
         if other_towns_xpath:
             sale, recycling, materials, resources = other_towns_xpath[0], other_towns_xpath[1], other_towns_xpath[2], other_towns_xpath[3]
 
             await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[2]/label''').click()
-            time.sleep(2)
+            await asyncio.sleep(2)
 
-            await click_other_towns('sale', sale)
-            await click_other_towns('recycling', recycling)
-            await click_other_towns('materials', materials)
-            await click_other_towns('resources', resources)
+            await click_other_towns(page, 'sale', sale)
+            await click_other_towns(page, 'recycling', recycling)
+            await click_other_towns(page, 'materials', materials)
+            await click_other_towns(page, 'resources', resources)
+        else:
+            xpath_for_a_town = '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[7]/select'''
+            await click_other_towns(page, xpath_for_a_town, a_town)
 
         await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[4]/input''').click()
-        time.sleep(1)
+        await asyncio.sleep(1)
         for i in range(3):
             await page.keyboard.down('Backspace')
         await page.keyboard.insert_text(tax)
-        time.sleep(4)
+        await asyncio.sleep(3)
 
         html_content = await page.content()
         soup = BeautifulSoup(html_content, 'lxml')
@@ -78,7 +88,7 @@ async def get_html(xpath_resource, tax, other_towns_xpath=None):
     return material_html
 
 
-def material_pars(material_html) -> list:
+async def material_pars(material_html) -> list:
     metal_list = material_html.find_all('div', {'class': 'item-row'})
     col_num = 1
     row_num = 1
@@ -129,13 +139,13 @@ def material_pars(material_html) -> list:
 
 
 if __name__ == "__main__":
-    xpath_resource = xpath_resources.get('stone')
-    other_towns_xpath = [towns["Bridgewatch"], towns["Martlock"], towns["Martlock"], towns["Thetford"]]
-    material_html = asyncio.run(get_html(xpath_resource, '1000'))
-    with open('output.html', 'w', encoding='utf-8') as file:
-        file.write(str(material_html))
+    # xpath_resource = xpath_resources.get('leather')
+    # other_towns_xpath = [town_click["Bridgewatch"], town_click["Martlock"], town_click["Martlock"], town_click["Thetford"]]
+    # material_html = asyncio.run(get_html(xpath_resource, '1000', other_towns_xpath))
+    # with open('output.html', 'w', encoding='utf-8') as file:
+    #     file.write(str(material_html))
 
-    # with open('output.html', 'r', encoding='utf-8') as file:
-    #     metal_html = BeautifulSoup(file.read(), 'lxml')
-    #
-    # print(material_pars(metal_html))
+    with open('output.html', 'r', encoding='utf-8') as file:
+        metal_html = BeautifulSoup(file.read(), 'lxml')
+
+    print(material_pars(metal_html))

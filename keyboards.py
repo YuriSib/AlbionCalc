@@ -5,14 +5,9 @@ import scrapper as scrap
 available_resource_names = ["Металл", "Кожа", "Ткань", "Дерево", "Камень"]
 
 
-def make_row_keyboard(items: list[str]) -> ReplyKeyboardMarkup:
-    """
-    Создаёт реплай-клавиатуру с кнопками в один ряд
-    :param items: список текстов для кнопок
-    :return: объект реплай-клавиатуры
-    """
-    row = [KeyboardButton(text=item) for item in items]
-    return ReplyKeyboardMarkup(keyboard=[row], resize_keyboard=True)
+start_parsing = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Начать парсинг', callback_data='start_parsing')]
+])
 
 
 change_resource = InlineKeyboardMarkup(inline_keyboard=[
