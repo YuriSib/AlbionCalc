@@ -41,6 +41,7 @@ class Filters(StatesGroup):
     materials = State()
     resources = State()
     tax = State()
+    self_return = State()
 
 
 @router.message(F.text == '/start')
@@ -154,9 +155,20 @@ async def save_name(callback: CallbackQuery, state: FSMContext):
 @router.message(Filters.tax)
 async def save_name(callback: CallbackQuery, state: FSMContext):
     await state.update_data(tax=callback.text)
+    await state.set_state(Filters.self_return)
+    await callback.bot.send_message(chat_id=callback.chat.id, text=f'Укажите собственный % возврата, '
+                                                                   f'если собственный процент вам не нужен, введите 0:')
+
+
+@router.message(Filters.self_return)
+async def save_name(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(self_return=callback.text)
     data = await state.get_data()
     resource = data['resource']
     other_town = data['other_town']
+    self_return = data.get('self_return')
+    if self_return == '0':
+        self_return = None
 
     xpath_resource = xpath_resources.get(resource)
     if other_town:
@@ -173,12 +185,11 @@ async def save_name(callback: CallbackQuery, state: FSMContext):
                                              f'\nРесурс для парсинга: {resource}, '
                                              f'\nПродажа материалов:{sale}, \nПереработка: {recycling}, '
                                              f'\nПокупка материалов: {materials}, \nПокупка ресурсов: {resources}, '
-                                             f'\nНалог: {tax}',
-                                        reply_markup=kb.start_parsing)
+                                             f'\nНалог: {tax}')
 
-        html = await get_html(xpath_resource, tax, other_towns_xpath=other_towns_xpath)
+        html = await get_html(xpath_resource, tax, self_return=self_return, other_towns_xpath=other_towns_xpath)
         table_data = await material_pars(html)
-        await add_value(table_data, 2)
+        await add_value(table_data, resource)
 
         await callback.bot.send_message(chat_id=callback.chat.id,
                                         text=f'Данные загружены в таблицу, можете попробовать снова',
@@ -190,9 +201,9 @@ async def save_name(callback: CallbackQuery, state: FSMContext):
                                         text=f'Вы выбрали следующие параметры для парсинга: \n'
                                              f'Ресурс для парсинга: {resource}, \nНалог: {tax}')
 
-        html = await get_html(xpath_resource, tax, a_town=town_click[a_town])
+        html = await get_html(xpath_resource, tax, self_return=self_return, a_town=town_click[a_town])
         table_data = await material_pars(html)
-        await add_value(table_data, 2)
+        await add_value(table_data, resource)
 
         await callback.bot.send_message(chat_id=callback.chat.id,
                                         text=f'Данные загружены в таблицу, можете попробовать снова',

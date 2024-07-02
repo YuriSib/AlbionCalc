@@ -31,7 +31,8 @@ xpath_other_towns = {
         'sale': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[7]/select''',
         'recycling': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[8]/select''',
         'materials': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[9]/select''',
-        'resources': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[10]/select'''
+        'resources': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[10]/select''',
+        'a_town': '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[7]/select'''
 }
 
 
@@ -48,9 +49,9 @@ async def click_other_towns(page, xpath_key, town_num):
     await page.keyboard.down("Enter")
 
 
-async def get_html(xpath_resource, tax, other_towns_xpath=None, a_town=None):
+async def get_html(xpath_resource, tax, self_return=None, other_towns_xpath=None, a_town=None):
     async with async_playwright() as p:
-        browser = await p.firefox.launch(headless=False)
+        browser = await p.firefox.launch(headless=True)
         page = await browser.new_page()
 
         await page.goto('https://albion-profit-calculator.com/ru/refining', wait_until='load')
@@ -69,15 +70,23 @@ async def get_html(xpath_resource, tax, other_towns_xpath=None, a_town=None):
             await click_other_towns(page, 'materials', materials)
             await click_other_towns(page, 'resources', resources)
         else:
-            xpath_for_a_town = '''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[7]/select'''
-            await click_other_towns(page, xpath_for_a_town, a_town)
+            await click_other_towns(page, "a_town", a_town)
 
         await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[4]/input''').click()
         await asyncio.sleep(1)
         for i in range(3):
             await page.keyboard.down('Backspace')
         await page.keyboard.insert_text(tax)
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
+
+        if self_return:
+            await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[3]/label''').click()
+            await asyncio.sleep(2)
+            await page.locator('''//*[@id="__layout"]/div/div/section/div[3]/div[1]/div[4]/input''').click()
+            for i in range(4):
+                await page.keyboard.down('Backspace')
+            await page.keyboard.insert_text(self_return)
+            await asyncio.sleep(2)
 
         html_content = await page.content()
         soup = BeautifulSoup(html_content, 'lxml')
