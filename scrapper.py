@@ -1,11 +1,7 @@
-import requests
 from bs4 import BeautifulSoup
-import random
 import asyncio
-import json
-import time
 
-from fake_useragent import UserAgent
+
 from playwright.async_api import async_playwright
 
 
@@ -55,6 +51,14 @@ async def get_html(xpath_resource, tax, self_return=None, other_towns_xpath=None
         page = await browser.new_page()
 
         await page.goto('https://albion-profit-calculator.com/ru/refining', wait_until='load')
+
+        await page.locator('''//*[@id="__layout"]/div/div/section/div[1]/div[2]/select''').click()
+        for i in range(6):
+            await page.keyboard.down('ArrowDown')
+            await asyncio.sleep(1)
+
+        await page.reload()
+        await asyncio.sleep(1)
 
         await page.locator(xpath_resource).click()
         await asyncio.sleep(2)
@@ -150,11 +154,13 @@ async def material_pars(material_html) -> list:
 if __name__ == "__main__":
     # xpath_resource = xpath_resources.get('leather')
     # other_towns_xpath = [town_click["Bridgewatch"], town_click["Martlock"], town_click["Martlock"], town_click["Thetford"]]
-    # material_html = asyncio.run(get_html(xpath_resource, '1000', other_towns_xpath))
+    material_html = asyncio.run(get_html(
+        '''//*[@id="__layout"]/div/div/section/div[3]/div[2]/div/div[1]''',
+        '800',))
     # with open('output.html', 'w', encoding='utf-8') as file:
     #     file.write(str(material_html))
 
-    with open('output.html', 'r', encoding='utf-8') as file:
-        metal_html = BeautifulSoup(file.read(), 'lxml')
+    # with open('output.html', 'r', encoding='utf-8') as file:
+    #     metal_html = BeautifulSoup(file.read(), 'lxml')
 
-    print(material_pars(metal_html))
+    # print(material_pars(metal_html))

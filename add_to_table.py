@@ -26,8 +26,8 @@ async def add_value(material_data: list, resource: str):
 
     gc = gspread.service_account(filename='creds.json')
     # sheet = gc.open("таблица расчета").get_worksheet(1)
-    # sheet = gc.open("Тест").sheet1
-    sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
+    sheet = gc.open("Тест").sheet1
+    # sheet = gc.open("таблица расчета").get_worksheet_by_id(121999378)
 
     for data in material_data:
         start_cell = await row_col_to_a1(start_row, start_col)
